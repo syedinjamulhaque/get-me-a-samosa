@@ -1,70 +1,92 @@
-import React from 'react'
-import Link from 'next/link'
+"use client"
 
-const Navbar = () => {
+import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
+import { signOut, useSession } from "next-auth/react"
 
-    return (
-        <nav className='bg-gray-900 shadow-xl shadow-white/20 text-white flex flex-wrap md:flex-nowrap justify-between items-center gap-3 px-4 py-3 md:py-0 md:h-16 sticky top-0 z-50'>
+const primaryBtn =
+  "rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-gradient-to-bl hover:shadow-lg hover:shadow-purple-500/40 focus:outline-none focus:ring-4 focus:ring-blue-300 active:scale-95"
 
-            <Link
-                className="logo font-bold text-lg flex justify-center items-center gap-2 group transition-transform duration-300 hover:scale-105"
-                href={"/"}
+const menuItem = "block w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700"
+
+export default function Navbar() {
+  const { data: session, status } = useSession()
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef(null)
+  const username = session?.user?.username
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e) => {
+      if (!menuRef.current?.contains(e.target)) setOpen(false)
+    }
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("mousedown", onPointerDown)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [open])
+
+  return (
+    <nav className="sticky top-0 z-50 flex h-16 items-center justify-between gap-3 bg-gray-900 px-4 text-white shadow-xl shadow-white/20 sm:px-6">
+      <Link href="/" className="flex items-center gap-2 font-bold transition-transform hover:scale-105">
+        <img src="/samosa.gif" width={40} height={40} alt="" className="size-9 sm:size-10" />
+        <span className="text-base sm:text-lg">Get Me a Samosa</span>
+      </Link>
+
+      {status === "loading" ? null : session ? (
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            className={`${primaryBtn} inline-flex items-center gap-2`}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+          >
+            Account
+            <svg
+              className={`size-2.5 transition-transform ${open ? "rotate-180" : ""}`}
+              viewBox="0 0 10 6"
+              fill="none"
+              aria-hidden="true"
             >
-                <img
-                    className='invertImg transition-transform duration-500 group-hover:rotate-12'
-                    src="samosa.gif"
-                    width={44}
-                    alt=""
-                />
-                <span className='text-lg sm:text-xl md:text-base my-1 md:my-0 transition-colors duration-300 group-hover:text-purple-400'>
-                    Get Me a Samosa!
-                </span>
-            </Link>
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
+            </svg>
+          </button>
 
-            <div className='relative flex flex-wrap sm:flex-nowrap justify-center items-center gap-2 sm:gap-3'>
-                <>
-                    <button
-                        id="dropdownDefaultButton"
-                        data-dropdown-toggle="dropdown"
-                        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/40"
-                        type="button"
-                    >
-                        Account
-                        <svg className="w-2.5 h-2.5 ms-2 sm:ms-3 transition-transform duration-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
-                        </svg>
-                    </button>
-
-                    <div
-                        id="dropdown"
-                        className="absolute left-0 sm:left-[15px] top-12 bg-white divide-y divide-gray-100 rounded-lg shadow-xl w-44 dark:bg-gray-700 transition-all duration-200 ease-in-out origin-top z-50"
-                    >
-                        <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                            <li>
-                                <Link href="/dashboard" className="block px-4 py-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</Link>
-                            </li>
-                            <li>
-                                <Link href="/" className="block px-4 py-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Your Page</Link>
-                            </li>
-                            <li>
-                                <Link href="#" className="block px-4 py-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</Link>
-                            </li>
-                        </ul>
-                    </div>
-                </>
-
-                <button className='text-white w-fit bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/40 active:scale-95'>
-                    Logout
-                </button>
-
-                <Link href={"/login"}>
-                    <button className='text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/40 active:scale-95'>
-                        Login
-                    </button>
+          {open && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-lg bg-slate-800 py-1 shadow-xl ring-1 ring-white/10"
+            >
+              <Link role="menuitem" href="/dashboard" className={menuItem} onClick={() => setOpen(false)}>
+                Dashboard
+              </Link>
+              {username && (
+                <Link role="menuitem" href={`/${username}`} className={menuItem} onClick={() => setOpen(false)}>
+                  Your page
                 </Link>
+              )}
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItem}
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                Sign out
+              </button>
             </div>
-        </nav>
-    )
+          )}
+        </div>
+      ) : (
+        <Link href="/login" className={primaryBtn}>
+          Login
+        </Link>
+      )}
+    </nav>
+  )
 }
-
-export default Navbar

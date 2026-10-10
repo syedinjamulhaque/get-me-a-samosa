@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+'use client'
+import { useEffect, useRef, useState } from 'react';
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
 
 const hexToRgb = hex => {
@@ -152,6 +153,7 @@ const GradientWaves = ({
 }) => {
   const containerRef = useRef(null);
   const enableMouseRef = useRef(mouseInteraction);
+  const [fallback, setFallback] = useState(false); // hooks must live here, not inside useEffect
 
   useEffect(() => {
     const container = containerRef.current;
@@ -164,6 +166,12 @@ const GradientWaves = ({
       antialias: false,
       dpr: Math.min(window.devicePixelRatio || 1, 2)
     });
+
+    // No WebGL2 on this device: show the plain gradient instead of a blank background.
+    if (!renderer.isWebgl2) {
+      setFallback(true);
+      return;
+    }
 
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
@@ -267,7 +275,8 @@ const GradientWaves = ({
     const io = new IntersectionObserver(
       ([entry]) => {
         isVisible = entry.isIntersecting;
-        isVisible ? tryStart() : tryStop();
+        if (isVisible) tryStart();
+        else tryStop();
       },
       { threshold: 0 }
     );
@@ -275,7 +284,8 @@ const GradientWaves = ({
 
     const onVisibility = () => {
       isPageVisible = !document.hidden;
-      isPageVisible ? tryStart() : tryStop();
+      if (isPageVisible) tryStart();
+      else tryStop();
     };
     document.addEventListener('visibilitychange', onVisibility);
 
@@ -291,7 +301,7 @@ const GradientWaves = ({
       ctxMap.delete(container);
       try {
         container.removeChild(canvas);
-      } catch {}
+      } catch { }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, []);
@@ -301,7 +311,7 @@ const GradientWaves = ({
     if (!container) return;
     const ctx = ctxMap.get(container);
     if (!ctx) return;
-    const { program } = ctx;
+    const { program, renderer, mesh } = ctx;
     const u = program.uniforms;
 
     enableMouseRef.current = mouseInteraction;
@@ -338,6 +348,7 @@ const GradientWaves = ({
     cc[0] = cr[0];
     cc[1] = cr[1];
     cc[2] = cr[2];
+    renderer.render({ scene: mesh });
   }, [
     horizonColor,
     waveColor,
@@ -361,7 +372,14 @@ const GradientWaves = ({
     parallaxStrength
   ]);
 
-  return <div ref={containerRef} className={`relative h-full w-full overflow-hidden ${className}`.trim()} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`relative h-full w-full overflow-hidden ${
+        fallback ? 'bg-gradient-to-br from-[#5227FF] via-[#a855f7] to-[#FF9FFC]' : ''
+      } ${className}`.trim()}
+    />
+  );
 };
 
 export default GradientWaves;
