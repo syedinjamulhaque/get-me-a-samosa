@@ -143,3 +143,11 @@
 .animate-fade-in-up {
   animation: fadeInUp 0.9s ease-out both;
 }
+
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  box-shadow: 0 0 0 1000px #1e293b inset;
+}
